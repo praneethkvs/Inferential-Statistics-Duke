@@ -56,11 +56,7 @@ coninc  -   Family Income in Constant Dollars
 
 ```{r}
 summary(gss$race)
-
 summary(gss$coninc)
-
-
-
 ```
 
 
@@ -68,7 +64,6 @@ We see that the mean income is $44,500 with 50% observations in the $18,440 - $5
 
 ```{r warning=FALSE,message=FALSE}
 ggplot(data=gss)+geom_histogram(aes(gss$coninc),color="white",fill="skyblue")+xlab("Family Income")+theme_minimal()+ylab("Count")
-
 ggplot(data=gss)+geom_histogram(aes(gss$coninc),color="white",fill="skyblue")+facet_wrap(~race,scales = "free_y")+xlab("Family Income")+ylab("Count")+theme_minimal()
 
 ```
