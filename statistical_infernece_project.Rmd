@@ -1,0 +1,145 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+***
+####Load packages and data.
+
+```{r load-packages, message = FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+library(psych)
+
+load("gss.Rdata")
+```
+
+
+* * *
+
+## Part 1: Data
+
+The data used in this project comes from the General Social Survey (GSS) which has  been gathering data on contemporary American society since 1972 in order to monitor and explain trends and constants in attitudes, behaviors, and attributes. 
+
+
+The vast majority of GSS data is obtained in face-to-face interviews. Computer-assisted personal interviewing (CAPI) began in the 2002 GSS. Under some conditions when it has proved difficult to arrange an in-person interview with a sampled respondent, GSS interviews may be conducted by telephone.
+
+The target population of the GSS is adults (18+) living in households in the United States. From 1972 to 2004 it was further restricted to those able to do the survey in English. From 2006 to present it has included those able to do the survey in English or Spanish. 
+
+**The GSS sample is drawn using an area probability design that randomly selects respondents in households across the United States to take part in the survey. All households had an equal chance to be selected to ensure the survey represents all households in the United States. Respondents that become part of the GSS sample are from a mix of urban, suburban, and rural geographic areas. Hence we can assume that the data meets the requirements for random sampling and random assignment.**
+
+**No random assignment or control group was used to collect the data since this is not an experimental study, the results should be not be used to infer causality.**
+
+
+* * *
+
+## Part 2: Research question
+
+Race wage gaps have been persistent in the United States since a long time but the general consensus is that the gaps have remarkably reduced through the years. A variety of explanations for these differences have been proposed-such as differing access to education, two parent home family structure, high school dropout rates and experience of discrimination - and the topic is highly controversial. Evaluating and understanding the causes and consequences of the racial wage gap is an important part of understanding racial inequality in the United States.
+
+**This Research aims to determine if indeed there is a relationship between race and wage in the United States using the gss dataset.** 
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+The gss dataset contains a large number of variables, Here we only look at the variables that are of prime importance to the research question at hand i.e. race and income. The gss codebook defines these variables as follows: 
+
+race    -   Race of Respondent
+
+coninc  -   Family Income in Constant Dollars
+
+```{r}
+summary(gss$race)
+
+summary(gss$coninc)
+
+
+
+```
+
+
+We see that the mean income is $44,500 with 50% observations in the $18,440 - $59,540 range. Also notice that 5829 observations have no information available for the income which will be omitted during our analysis.
+
+```{r warning=FALSE,message=FALSE}
+ggplot(data=gss)+geom_histogram(aes(gss$coninc),color="white",fill="skyblue")+xlab("Family Income")+theme_minimal()+ylab("Count")
+
+ggplot(data=gss)+geom_histogram(aes(gss$coninc),color="white",fill="skyblue")+facet_wrap(~race,scales = "free_y")+xlab("Family Income")+ylab("Count")+theme_minimal()
+
+```
+
+As expected the histogram is right-skewed with most of the observations falling in the lower range. The histograms for Individual races also follow a similar distribution as can be seen.
+
+```{r}
+tapply(gss$coninc,gss$race,mean,na.rm=T)
+
+```
+The mean Income across various race groups is shown above. We see that there is a difference between the wages. We need to find out if this difference is purely due to chance or if there is an actual relationship between the income and race.  
+
+* * *
+
+## Part 4: Inference
+
+We need to test if there is a difference between the average income amongst different races, so our ($H_{0}$) is that the mean income across all races is equal and our ($H_{A}$) is that there is a difference amongst at least one pair of means.
+
+The hypothesis is represented as follows:
+
+
+$H_{0}: \mu_{White} = \mu_{Black} = \mu_{Other}$
+
+$H_{A}: the\ average\ income\ in\ constant\ dollar\ (\mu_{i})\ varies\ across\ some\ (or\ all)\ groups$
+
+Since we are dealing with an inference for comparing more than two means, we use an ANOVA(Analysis of Variance) test. The ANOVA test uses an F-Statistic , whose value helps us in making a decision to reject or accept the $H_{0}$. A Large F-statistic signifies that most of the variance is between groups and not within groups which provides strong evidence for rejecting $H_{0}$.
+
+###Conditions for ANOVA
+
+
+####1. Independence:
+As mentioned earlier the gss data meets the requirement for random assignment and hence it meets the conditions for independence. Also clearly the number of observations is less than 10% of the total population. 
+
+####2. Normality:
+As seen from the histograms earlier, the distribution of the income across all groups is right-skewed but since we have a large enough sample of data, we can assume near-normality of the distributions.
+
+####3. Equal Variance:  
+ANOVA requires that we have homoschedastic groups i.e groups with equal variance.
+
+
+```{r}
+
+prop.table(tapply(gss$coninc,gss$race,sd,na.rm=T))
+
+```
+
+
+We see that there is not a very large difference between the variation or spread amongst the groups.
+
+###ANOVA Test
+
+We perform the ANOVA test using the inference function from the statsr package. 
+
+```{r}
+
+inference(coninc,race,data=gss[!is.na(gss$coninc),],type = "ht",statistic = "mean",method = "theoretical", alternative = "greater")
+
+```
+
+The outcome of the ANOVA test has an F-satistic 675.0779 and a very small p-value < 0.0001, which provides very strong evidence against the Null hypothesis $H_{0}$.
+
+***
+##Part 5: Conclusion
+
+From the results of the ANOVA test, we Reject the Null Hypothesis $H_{0}$ and accept the Alternative Hypothesis $H_{A}$ i.e there is a statistically significant difference between the means of average family income amongst atleast one pair of races.
+
+Further, the pair-wise t-test results gives us very small p-values for all the three pairs, 6.999e-290 between Black and White,  4.723e-10 between Other and White and 1.079e-48 between Other and Black. So we can conclude that there is a clear difference in the average income between the different races in the United States.
+
+Future research can be done using a more comprehensive number of races than what we have in the gss dataset and also finding out relationships which account for such differences among wages, using other variables from the original gss dataset which provides much more extensive data. 
+
+
+
+
+
